@@ -1,0 +1,29 @@
+{
+  "name": "react-native-google-vision",
+  "version": "1.0.0",
+  "description": "A face detect  react native android and ios",
+  "main": "index",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/windwang/react-native-google-vision.git"
+  },
+  "keywords": [
+    "react-component",
+    "react-native",
+    "android",
+    "ios",
+    "calendar"
+  ],
+  "author": "windwang <windwang@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/windwang/react-native-google-vision/issues"
+  },
+  "homepage": "https://github.com/windwang/react-native-google-vision",
+  "peerDependencies": {
+    "react-native": ">=0.33"
+  },
+  "dependencies": {
+    "react-native": "^0.46.3"
+  }
+}

@@ -11,7 +11,7 @@ import com.facebook.react.uimanager.ThemedReactContext;
 public class FaceTrackerViewManager extends SimpleViewManager<FaceTrackerView> {
     @Override
     public String getName() {
-        return null;
+        return "RCTFaceTrackerView";
     }
 
     @Override

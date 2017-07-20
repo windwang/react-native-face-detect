@@ -13,7 +13,7 @@ import java.util.List;
  * Created by wwm on 2017-07-15.
  */
 
-public class RCFacePackage implements ReactPackage {
+public class ReactFacePackage implements ReactPackage {
     @Override
     public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
         return Collections.emptyList();

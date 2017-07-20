@@ -15,287 +15,419 @@
  */
 package com.smn.face;
 
-import android.Manifest;
-import android.annotation.TargetApi;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
+
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.pm.PackageManager;
-import android.os.Build;
-import android.os.Bundle;
+
+
+import android.graphics.Bitmap;
+import android.graphics.PointF;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.hardware.Camera;
+import android.media.FaceDetector;
 import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
+
+
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.View;
 
+
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.LifecycleEventListener;
-import com.facebook.react.bridge.ReactContext;
+
+import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.ThemedReactContext;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.vision.CameraSource;
-import com.google.android.gms.vision.MultiProcessor;
-import com.google.android.gms.vision.Tracker;
-import com.google.android.gms.vision.face.Face;
-import com.google.android.gms.vision.face.FaceDetector;
+import com.facebook.react.uimanager.events.RCTEventEmitter;
 import com.smn.face.camera.CameraSourcePreview;
-import com.smn.face.camera.GraphicOverlay;
 
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
 
 /**
  * Activity for the face tracker app.  This app detects faces with the rear facing camera, and draws
  * overlay graphics to indicate the position, size, and ID of each face.
  */
-public final class FaceTrackerView extends View implements LifecycleEventListener {
-    private static final String TAG = "FaceTracker";
+public final class FaceTrackerView extends CameraSourcePreview implements LifecycleEventListener, Camera.PreviewCallback {
+  private static final String TAG = "FaceTracker";
 
-    private CameraSource mCameraSource = null;
+  private Camera mCameraSource = null;
 
-    private CameraSourcePreview mPreview;
-    private GraphicOverlay mGraphicOverlay;
+  private CameraSourcePreview mPreview = this;
 
-    private static final int RC_HANDLE_GMS = 9001;
-    // permission request codes need to be < 256
-    private static final int RC_HANDLE_CAMERA_PERM = 2;
-    ThemedReactContext context;
+  private static final int RC_HANDLE_GMS = 9001;
+  // permission request codes need to be < 256
+  private static final int RC_HANDLE_CAMERA_PERM = 2;
+  ThemedReactContext context;
+  private int mCameraId;
 
-    public FaceTrackerView(Context context) {
-        super(context);
-        onCreate(context, null);
+  Camera.Size previewSize;
+
+  private byte[] grayBuff;
+  private int bufflen;
+  private int[] rgbs;
+  private android.media.FaceDetector fdet;
+  private boolean isThreadWorking = false;
+  private FaceDetectThread detectThread = null;
+  private Integer imageWidth = 320;
+  private Integer imageHeight = 240;
+  private int maxFace;
+
+  private FaceResult faces[];
+  private FaceResult faces_previous[];
+  private int Id = 0;
+  private HashMap<Integer, Integer> facesCount = new HashMap<>();
+  private Integer minDetectedTimes = 3;
+  private Integer minKeepTime = 10;
+
+  public FaceTrackerView(Context context, @Nullable AttributeSet attrs) {
+    super(context, attrs);
+    onCreate(context, attrs);
+  }
+
+
+  //==============================================================================================
+  // Activity Methods
+  //==============================================================================================
+
+  /**
+   * Initializes the UI and initiates the creation of a face detector.
+   *
+   * @param context
+   * @param attrs
+   */
+
+  public void onCreate(Context context, AttributeSet attrs) {
+    this.context = (ThemedReactContext) context;
+    this.context.addLifecycleEventListener(this);
+    createCameraSource();
+  }
+
+
+  /**
+   * Creates and starts the camera.  Note that this uses a higher resolution in comparison
+   * to other detection examples to enable the barcode detector to detect small barcodes
+   * at long distances.
+   */
+  private void createCameraSource() {
+    mCameraSource = open();
+    maxFace = mCameraSource.getParameters().getMaxNumDetectedFaces();
+    if (maxFace == 0)
+      maxFace = 10;
+    //mCameraSource.setFaceDetectionListener(this);
+    previewSize = mCameraSource.getParameters().getPreviewSize();
+
+    bufflen = previewSize.width * previewSize.height;
+    grayBuff = new byte[bufflen];
+    rgbs = new int[bufflen];
+    faces = new FaceResult[maxFace];
+    faces_previous = new FaceResult[maxFace];
+    for (int i = 0; i < maxFace; i++) {
+      faces[i] = new FaceResult();
+      faces_previous[i] = new FaceResult();
+    }
+    fdet = new android.media.FaceDetector(previewSize.width, previewSize.height, maxFace);
+    mCameraSource.setPreviewCallback(this);
+  }
+
+
+  public Camera open() {
+    int numberOfCameras = Camera.getNumberOfCameras();
+    for (int i = 0; i < numberOfCameras; i++) {
+      Camera.getCameraInfo(i, mCameraInfo);
+      if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+        this.mCameraId = i;
+        return Camera.open(i);
+      }
+    }
+    return null;
+  }
+
+
+  //==============================================================================================
+  // Camera Source Preview
+  //==============================================================================================
+
+  /**
+   * Starts or restarts the camera source, if it exists.  If the camera source doesn't exist yet
+   * (e.g., because onResume was called before the camera source was created), this will be called
+   * again when the camera source is created.
+   */
+  private void startCameraSource() {
+    if (mCameraSource != null) {
+      try {
+        mPreview.start(mCameraSource, mCameraId);
+      } catch (IOException e) {
+        Log.e(TAG, "Unable to start camera source.", e);
+        mCameraSource.release();
+        mCameraSource = null;
+      }
+    }
+  }
+
+
+  @Override
+  public void onHostResume() {
+    startCameraSource();
+  }
+
+  @Override
+  public void onHostPause() {
+    mPreview.stop();
+  }
+
+  @Override
+  public void onHostDestroy() {
+    if (mCameraSource != null) {
+      mCameraSource.release();
+    }
+  }
+
+
+  @Override
+  public void onPreviewFrame(byte[] data, Camera camera) {
+    if (!isThreadWorking) {
+      isThreadWorking = true;
+      waitForFdetThreadComplete();
+      detectThread = new FaceDetectThread(this.context);
+      detectThread.setData(data);
+      detectThread.start();
+    }
+  }
+
+  private void waitForFdetThreadComplete() {
+    if (detectThread == null) {
+      return;
     }
 
-    public FaceTrackerView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        onCreate(context, attrs);
+    if (detectThread.isAlive()) {
+      try {
+        detectThread.join();
+        detectThread = null;
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
 
-    public FaceTrackerView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        onCreate(context, attrs);
+  }
+
+  public void setImageWidth(Integer imageWidth) {
+    this.imageWidth = imageWidth;
+  }
+
+  public Integer getImageWidth() {
+    return imageWidth;
+  }
+
+  public void setImageHeight(Integer imageHeight) {
+    this.imageHeight = imageHeight;
+  }
+
+  public Integer getImageHeight() {
+    return imageHeight;
+  }
+
+  public void setMinDetectedTimes(Integer minDetectedTimes) {
+    this.minDetectedTimes = minDetectedTimes;
+  }
+
+  public Integer getMinDetectedTimes() {
+    return minDetectedTimes;
+  }
+
+  public void setMinKeepTime(Integer minKeepTime) {
+    this.minKeepTime = minKeepTime;
+  }
+
+  public Integer getMinKeepTime() {
+    return minKeepTime;
+  }
+
+
+  /**
+   * Do face detect in thread
+   */
+  private class FaceDetectThread extends Thread {
+    private byte[] data = null;
+    private Context ctx;
+    private Bitmap faceCroped;
+
+    public FaceDetectThread(Context ctx) {
+      this.ctx = ctx;
+
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public FaceTrackerView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        onCreate(context, attrs);
+
+    public void setData(byte[] data) {
+      this.data = data;
     }
 
-    //==============================================================================================
-    // Activity Methods
-    //==============================================================================================
+    public void run() {
+      Bitmap bitmap = getBitmap();
+      float aspect = (float) previewSize.height / (float) previewSize.width;
+      int w = imageWidth;
+      int h = (int) (imageWidth * aspect);
 
-    /**
-     * Initializes the UI and initiates the creation of a face detector.
-     *
-     * @param context
-     * @param attrs
-     */
+      float xScale = (float) previewSize.width / (float) w;
+      float yScale = (float) previewSize.height / (float) h;
 
-    public void onCreate(Context context, AttributeSet attrs) {
+      Bitmap bmp = Bitmap.createScaledBitmap(bitmap, w, h, false);
 
-        this.context= (ThemedReactContext) context;
-       this.context.addLifecycleEventListener(this);
 
-        mPreview = new CameraSourcePreview(context, attrs);
-        mGraphicOverlay = new GraphicOverlay(context, attrs);
+      int rotate = mDisplayOrientation;
+      if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT && mDisplayRotation % 180 == 0) {
+        if (rotate + 180 > 360) {
+          rotate = rotate - 180;
+        } else
+          rotate = rotate + 180;
+      }
+      switch (rotate) {
+        case 90:
+          bmp = ImageUtils.rotate(bmp, 90);
+          xScale = (float) previewSize.height / bmp.getWidth();
+          yScale = (float) previewSize.width / bmp.getHeight();
+          break;
+        case 180:
+          bmp = ImageUtils.rotate(bmp, 180);
+          break;
+        case 270:
+          bmp = ImageUtils.rotate(bmp, 270);
+          xScale = (float) previewSize.height / (float) h;
+          yScale = (float) previewSize.width / (float) imageWidth;
+          break;
+      }
+      fdet = new android.media.FaceDetector(bmp.getWidth(), bmp.getHeight(), maxFace);
 
-        // Check for the camera permission before accessing the camera.  If the
-        // permission is not granted yet, request permission.
-        createCameraSource();
+      android.media.FaceDetector.Face[] fullResults = new android.media.FaceDetector.Face[maxFace];
+      int findCount = fdet.findFaces(bmp, fullResults);
 
+      for (int i = 0; i < maxFace; i++) {
+        processFace(bitmap, xScale, yScale, rotate, fullResults[i], i);
+      }
+
+      isThreadWorking = false;
     }
 
-    /**
-     * Handles the requesting of the camera permission.  This includes
-     * showing a "Snackbar" message of why the permission is needed then
-     * sending the request.
-     */
-    private void requestCameraPermission() {
-//        Log.w(TAG, "Camera permission is not granted. Requesting permission");
-//
-//        final String[] permissions = new String[]{Manifest.permission.CAMERA};
-//
-//        if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
-//                Manifest.permission.CAMERA)) {
-//            ActivityCompat.requestPermissions(this, permissions, RC_HANDLE_CAMERA_PERM);
-//            return;
-//        }
-//
-//        final Activity thisActivity = this;
-//
-//        View.OnClickListener listener = new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                ActivityCompat.requestPermissions(thisActivity, permissions,
-//                        RC_HANDLE_CAMERA_PERM);
-//            }
-//        };
-//
-//        Snackbar.make(mGraphicOverlay, R.string.permission_camera_rationale,
-//                Snackbar.LENGTH_INDEFINITE)
-//                .setAction(R.string.ok, listener)
-//                .show();
-    }
+    private void processFace(Bitmap bitmap, float xScale, float yScale, int rotate, FaceDetector.Face detectedFace, int i) {
+      if (detectedFace == null || detectedFace.confidence() < 0.3) {
+        faces[i].clear();
+        return;
+      }
+      PointF mid = new PointF();
+      detectedFace.getMidPoint(mid);
 
-    /**
-     * Creates and starts the camera.  Note that this uses a higher resolution in comparison
-     * to other detection examples to enable the barcode detector to detect small barcodes
-     * at long distances.
-     */
-    private void createCameraSource() {
+      mid.x *= xScale;
+      mid.y *= yScale;
 
-        Context context = getContext();
-        FaceDetector detector = new FaceDetector.Builder(context)
-                .setClassificationType(FaceDetector.ALL_CLASSIFICATIONS)
-                .build();
+      float eyesDis = detectedFace.eyesDistance() * xScale;
+      float confidence = detectedFace.confidence();
+      float pose = detectedFace.pose(FaceDetector.Face.EULER_Y);
+      int idFace = Id;
 
-        detector.setProcessor(
-                new MultiProcessor.Builder<>(new GraphicFaceTrackerFactory())
-                        .build());
 
-        if (!detector.isOperational()) {
-            // Note: The first time that an app using face API is installed on a device, GMS will
-            // download a native library to the device in order to do detection.  Usually this
-            // completes before the app is run for the first time.  But if that download has not yet
-            // completed, then the above call will not detect any faces.
-            //
-            // isOperational() can be used to check if the required native library is currently
-            // available.  The detector will automatically become operational once the library
-            // download completes on device.
-            Log.w(TAG, "Face detector dependencies are not yet available.");
+      Rect rect = new Rect(
+        (int) (mid.x - eyesDis * 1.20f),
+        (int) (mid.y - eyesDis * 0.55f),
+        (int) (mid.x + eyesDis * 1.20f),
+        (int) (mid.y + eyesDis * 1.85f));
+
+      /**
+       * Only detect face size > 100x100
+       */
+      if (rect.height() * rect.width() <= 100 * 100) return;
+
+      // Check this face and previous face have same ID?
+      for (int j = 0; j < maxFace; j++) {
+        float eyesDisPre = faces_previous[j].eyesDistance();
+        PointF midPre = new PointF();
+        faces_previous[j].getMidPoint(midPre);
+
+        RectF rectCheck = new RectF(
+          (midPre.x - eyesDisPre * 1.5f),
+          (midPre.y - eyesDisPre * 1.15f),
+          (midPre.x + eyesDisPre * 1.5f),
+          (midPre.y + eyesDisPre * 1.85f));
+
+        if (rectCheck.contains(mid.x, mid.y) && (System.currentTimeMillis() - faces_previous[j].getTime()) < minKeepTime * 1000) {
+          idFace = faces_previous[j].getId();
+          break;
         }
+      }
 
-        mCameraSource = new CameraSource.Builder(context, detector)
-                .setRequestedPreviewSize(640, 480)
-                .setFacing(CameraSource.CAMERA_FACING_FRONT)
-                .setRequestedFps(30.0f)
-                .build();
+      if (idFace == Id) Id++;
+
+      faces[i].setFace(idFace, mid, eyesDis, confidence, pose, System.currentTimeMillis());
+      faces_previous[i].set(faces[i].getId(), faces[i].getMidEye(), faces[i].eyesDistance(), faces[i].getConfidence(), faces[i].getPose(), faces[i].getTime());
+
+      //
+      // if focus in a face 5 frame -> take picture face display in RecyclerView
+      // because of some first frame have low quality
+      //
+      if (facesCount.get(idFace) == null) {
+        facesCount.put(idFace, 0);
+        return;
+      }
+
+      int count = facesCount.get(idFace) + 1;
+      if (count <= minDetectedTimes)
+        facesCount.put(idFace, count);
+      //
+      // Crop Face to display in RecylerView
+      //
+      if (count == minDetectedTimes) {
+        faceCroped = ImageUtils.cropFace(faces[i], bitmap, rotate);
+        if (faceCroped != null) {
+          faces[i].setImage(ImageUtils.getBase64FromBitmap(faceCroped));
+          WritableMap event = Arguments.createMap();
+          event.putMap("face", Converter.toMap(faces[i], mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT));
+          context
+            .getJSModule(RCTEventEmitter.class)
+            .receiveEvent(
+              FaceTrackerView.this.getId(),
+              "topChange",
+              event
+            );
+        }
+      }
+
     }
 
 
-    //==============================================================================================
-    // Camera Source Preview
-    //==============================================================================================
-
-    /**
-     * Starts or restarts the camera source, if it exists.  If the camera source doesn't exist yet
-     * (e.g., because onResume was called before the camera source was created), this will be called
-     * again when the camera source is created.
-     */
-    private void startCameraSource() {
-
-
-        // check that the device has play services available.
-        int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(
-                getContext());
-        if (code != ConnectionResult.SUCCESS) {
-
-            Dialog dlg =
-                    GoogleApiAvailability.getInstance().getErrorDialog(this.context.getCurrentActivity(), code, RC_HANDLE_GMS);
-            dlg.show();
-        }
-
-        if (mCameraSource != null) {
-            try {
-                mPreview.start(mCameraSource, mGraphicOverlay);
-            } catch (IOException e) {
-                Log.e(TAG, "Unable to start camera source.", e);
-                mCameraSource.release();
-                mCameraSource = null;
-            }
-        }
+    private void saveImage(Bitmap bitmap, String fileName) throws IOException {
+      File f = new File(context.getExternalCacheDir(), fileName);
+      f.createNewFile();
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+      byte[] bitmapdata = bos.toByteArray();
+      FileOutputStream fos = new FileOutputStream(f);
+      fos.write(bitmapdata);
+      fos.flush();
+      fos.close();
     }
 
-    @Override
-    public void onHostResume() {
-        startCameraSource();
+    private Bitmap getBitmap() {
+      ByteBuffer bbuffer = ByteBuffer.wrap(data);
+      bbuffer.get(grayBuff, 0, bufflen);
+      gray8toRGB32(grayBuff, previewSize.width, previewSize.height, rgbs);
+      return Bitmap.createBitmap(rgbs, previewSize.width, previewSize.height, Bitmap.Config.RGB_565);
     }
 
-    @Override
-    public void onHostPause() {
-        mPreview.stop();
+    private void gray8toRGB32(byte[] gray8, int width, int height, int[] rgb_32s) {
+      final int endPtr = width * height;
+      int ptr = 0;
+      while (true) {
+        if (ptr == endPtr)
+          break;
+
+        final int Y = gray8[ptr] & 0xff;
+        rgb_32s[ptr] = 0xff000000 + (Y << 16) + (Y << 8) + Y;
+        ptr++;
+      }
     }
+  }
 
-    @Override
-    public void onHostDestroy() {
-        if (mCameraSource != null) {
-            mCameraSource.release();
-        }
-    }
-
-
-    //==============================================================================================
-    // Graphic Face Tracker
-    //==============================================================================================
-
-    /**
-     * Factory for creating a face tracker to be associated with a new face.  The multiprocessor
-     * uses this factory to create face trackers as needed -- one for each individual.
-     */
-    private class GraphicFaceTrackerFactory implements MultiProcessor.Factory<Face> {
-        @Override
-        public Tracker<Face> create(Face face) {
-
-            return new GraphicFaceTracker(mGraphicOverlay);
-        }
-    }
-
-    /**
-     * Face tracker for each detected individual. This maintains a face graphic within the app's
-     * associated face overlay.
-     */
-    private class GraphicFaceTracker extends Tracker<Face> {
-        private GraphicOverlay mOverlay;
-        private FaceGraphic mFaceGraphic;
-
-        GraphicFaceTracker(GraphicOverlay overlay) {
-            mOverlay = overlay;
-            mFaceGraphic = new FaceGraphic(overlay);
-        }
-
-        /**
-         * Start tracking the detected face instance within the face overlay.
-         */
-        @Override
-        public void onNewItem(int faceId, Face item) {
-            mFaceGraphic.setId(faceId);
-        }
-
-        /**
-         * Update the position/characteristics of the face within the overlay.
-         */
-        @Override
-        public void onUpdate(FaceDetector.Detections<Face> detectionResults, Face face) {
-            mOverlay.add(mFaceGraphic);
-            mFaceGraphic.updateFace(face);
-        }
-
-        /**
-         * Hide the graphic when the corresponding face was not detected.  This can happen for
-         * intermediate frames temporarily (e.g., if the face was momentarily blocked from
-         * view).
-         */
-        @Override
-        public void onMissing(FaceDetector.Detections<Face> detectionResults) {
-            mOverlay.remove(mFaceGraphic);
-        }
-
-        /**
-         * Called when the face is assumed to be gone for good. Remove the graphic annotation from
-         * the overlay.
-         */
-        @Override
-        public void onDone() {
-            mOverlay.remove(mFaceGraphic);
-        }
-    }
 }

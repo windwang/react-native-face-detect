@@ -81,7 +81,7 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
   private FaceResult faces_previous[];
   private int Id = 0;
   private HashMap<Integer, Integer> facesCount = new HashMap<>();
-  private Integer minDetectedTimes = 3;
+  private Integer minDetectedTimes =3;
   private Integer minKeepTime = 10;
 
   public FaceTrackerView(Context context, @Nullable AttributeSet attrs) {
@@ -367,18 +367,18 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
       // if focus in a face 5 frame -> take picture face display in RecyclerView
       // because of some first frame have low quality
       //
+      int count=0;
       if (facesCount.get(idFace) == null) {
         facesCount.put(idFace, 0);
-        return;
+      }else{
+        count = facesCount.get(idFace) + 1;
       }
-
-      int count = facesCount.get(idFace) + 1;
       if (count <= minDetectedTimes)
         facesCount.put(idFace, count);
       //
       // Crop Face to display in RecylerView
       //
-      if (count == minDetectedTimes) {
+      if (count >= minDetectedTimes) {
         faceCroped = ImageUtils.cropFace(faces[i], bitmap, rotate);
         if (faceCroped != null) {
           faces[i].setImage(ImageUtils.getBase64FromBitmap(faceCroped));

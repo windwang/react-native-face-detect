@@ -157,9 +157,9 @@ public class ImageUtils {
 
     Rect rect = new Rect(
       (int) (mid.x - eyesDis * 1.90f),
-      (int) (mid.y - eyesDis * 2.25f),
-      (int) (mid.x + eyesDis * 1.50f),
-      (int) (mid.y + eyesDis * 2.15f));
+      (int) (mid.y - eyesDis * 3.05f),
+      (int) (mid.x + eyesDis * 1.90f),
+      (int) (mid.y + eyesDis * 3.05f));
 
     Bitmap.Config config = Bitmap.Config.RGB_565;
     if (bitmap.getConfig() != null) config = bitmap.getConfig();
@@ -191,6 +191,12 @@ public class ImageUtils {
     if(rect.bottom>bmp.getHeight()){
       rect.top-=rect.bottom-bmp.getHeight();
       rect.bottom=bmp.getHeight();
+    }
+    if(rect.left<0){
+      rect.left=0;
+    }
+    if(rect.top<0){
+      rect.top=0;
     }
 
   //  bmp = cropBitmap(bmp, rect);

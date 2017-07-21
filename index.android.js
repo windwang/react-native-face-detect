@@ -5,52 +5,52 @@ import {requireNativeComponent, View} from 'react-native';
 
 const RCTFaceTrackerView = requireNativeComponent('RCTFaceTrackerView', FaceTrackerView, {
   nativeOnly: {
-    onChange: true,
-    onReceiveFace: true
+    onChange: true
   }
 });
 
 export default class FaceTrackerView extends React.Component {
 
   static propTypes = {
+    /**
+     * 脸部检测事件
+     */
     onFaceDetection: PropTypes.func,
-    onNewFace: PropTypes.func
+    /**
+     * 检测脸部图片的宽度，值越小检测速度越快，相应的要求用户距离摄像头越近，默认值是320
+     */
+    imageWidth: PropTypes.number,
+    /**
+     * 检测脸部图片的高度，值越小检测速度越快，相应的要求用户距离摄像头越近，默认值是240
+     */
+    imageHeight: PropTypes.number,
+
+    /**
+     * 至少检测到的次数，大于等于此值的脸才会引发检测事件,默认值是3
+     */
+    minDetectedTimes: PropTypes.number,
+    /**
+     * 超时时间，超过此时间后用户再出现默认为新用户，检测次数从0开始增加,默认为10秒
+     */
+    minKeepTime: PropTypes.number
   }
 
   constructor(props) {
     super(props);
     this._onChange = this
       ._onChange
-      .bind(this);
-
-    this._onNew = this
-      ._onNew
-      .bind(this);
-
+      .bind(this)
   }
   _onChange(event) {
-    console.log("=CHANGEVENT", event.nativeEvent.face, event.nativeEvent)
     if (!this.props.onFaceDetection) {
-      return;
+      return
     }
     this
       .props
-      .onFaceDetection(event.nativeEvent);
+      .onFaceDetection(event.nativeEvent)
   }
-  _onNew(event) {
-    console.log("=NEWEVENT", event.nativeEvent.face, event.nativeEvent)
-    if (!this.props.onNewFace) {
-      return;
-    }
-    this
-      .props
-      .onNewFace(event.nativeEvent);
 
-  }
   render() {
-    return <RCTFaceTrackerView
-      {...this.props}
-      onChange={this._onChange}
-      onReceiveFace={this._onNew}/>
+    return <RCTFaceTrackerView {...this.props} onChange={this._onChange}/>
   }
 }

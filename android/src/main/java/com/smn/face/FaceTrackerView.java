@@ -82,8 +82,9 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
   private FaceResult faces_previous[];
   private int Id = 0;
   private HashMap<Integer, Integer> facesCount = new HashMap<>();
-  private Integer minDetectedTimes =3;
+  private Integer minDetectedTimes = 3;
   private Integer minKeepTime = 10;
+  private Float minConfidence;
 
   public FaceTrackerView(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
@@ -248,6 +249,14 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
     return minKeepTime;
   }
 
+  public Float getMinConfidence() {
+    return minConfidence;
+  }
+
+  public void setMinConfidence(Float minConfidence) {
+    this.minConfidence = minConfidence;
+  }
+
 
   /**
    * Do face detect in thread
@@ -314,7 +323,7 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
     }
 
     private void processFace(Bitmap bitmap, float xScale, float yScale, int rotate, FaceDetector.Face detectedFace, int i) {
-      if (detectedFace == null || detectedFace.confidence() < 0.3) {
+      if (detectedFace == null || detectedFace.confidence() < minConfidence) {
         faces[i].clear();
         return;
       }
@@ -368,10 +377,10 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
       // if focus in a face 5 frame -> take picture face display in RecyclerView
       // because of some first frame have low quality
       //
-      int count=0;
+      int count = 0;
       if (facesCount.get(idFace) == null) {
         facesCount.put(idFace, 0);
-      }else{
+      } else {
         count = facesCount.get(idFace) + 1;
       }
       if (count <= minDetectedTimes)
@@ -385,7 +394,7 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
           faces[i].setImage(ImageUtils.getBase64FromBitmap(faceCroped));
           WritableMap event = Arguments.createMap();
           event.putMap("face", Converter.toMap(faces[i], mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT));
-         // event.putString("full", ImageUtils.getBase64FromBitmap(bitmap));
+          // event.putString("full", ImageUtils.getBase64FromBitmap(bitmap));
           context
             .getJSModule(RCTEventEmitter.class)
             .receiveEvent(

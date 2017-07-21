@@ -60,6 +60,18 @@ public class FaceTrackerViewManager extends SimpleViewManager<FaceTrackerView> {
   }
 
   /**
+   * 最小置信度，大于该值的才被识别为人脸
+   * @param view
+   * @param confidence
+   */
+  @ReactProp(name="confidence",defaultFloat = 0.3f)
+  public void setConfidence(FaceTrackerView view, Float confidence) {
+    if (confidence != null) {
+      view.setMinConfidence(confidence);
+    }
+  }
+
+  /**
    *  超时时间，超过此时间后用户再出现默认为新用户
    * @param view
    * @param minKeepTime

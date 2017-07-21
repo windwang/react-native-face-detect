@@ -74,17 +74,17 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
   private android.media.FaceDetector fdet;
   private boolean isThreadWorking = false;
   private FaceDetectThread detectThread = null;
-  private Integer imageWidth = 320;
-  private Integer imageHeight = 240;
+  private int imageWidth = 320;
+  private int imageHeight = 240;
   private int maxFace;
 
   private FaceResult faces[];
   private FaceResult faces_previous[];
   private int Id = 0;
   private HashMap<Integer, Integer> facesCount = new HashMap<>();
-  private Integer minDetectedTimes = 3;
-  private Integer minKeepTime = 10;
-  private Float minConfidence;
+  private int minDetectedTimes = 3;
+  private int minKeepTime = 10;
+  private float minConfidence=0.3f;
 
   public FaceTrackerView(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
@@ -217,43 +217,43 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
 
   }
 
-  public void setImageWidth(Integer imageWidth) {
+  public void setImageWidth(int imageWidth) {
     this.imageWidth = imageWidth;
   }
 
-  public Integer getImageWidth() {
+  public int getImageWidth() {
     return imageWidth;
   }
 
-  public void setImageHeight(Integer imageHeight) {
+  public void setImageHeight(int imageHeight) {
     this.imageHeight = imageHeight;
   }
 
-  public Integer getImageHeight() {
+  public int getImageHeight() {
     return imageHeight;
   }
 
-  public void setMinDetectedTimes(Integer minDetectedTimes) {
+  public void setMinDetectedTimes(int minDetectedTimes) {
     this.minDetectedTimes = minDetectedTimes;
   }
 
-  public Integer getMinDetectedTimes() {
+  public int getMinDetectedTimes() {
     return minDetectedTimes;
   }
 
-  public void setMinKeepTime(Integer minKeepTime) {
+  public void setMinKeepTime(int minKeepTime) {
     this.minKeepTime = minKeepTime;
   }
 
-  public Integer getMinKeepTime() {
+  public int getMinKeepTime() {
     return minKeepTime;
   }
 
-  public Float getMinConfidence() {
+  public float getMinConfidence() {
     return minConfidence;
   }
 
-  public void setMinConfidence(Float minConfidence) {
+  public void setMinConfidence(float minConfidence) {
     this.minConfidence = minConfidence;
   }
 

@@ -40,11 +40,8 @@ public class FaceTrackerViewManager extends SimpleViewManager<FaceTrackerView> {
    * @param height
    */
   @ReactProp(name = "imageHeight", defaultInt = 240)
-  public void setImageHeight(FaceTrackerView view, Integer height) {
-    if (height != null) {
-
+  public void setImageHeight(FaceTrackerView view, int height) {
       view.setImageHeight(height);
-    }
   }
 
   /**
@@ -53,10 +50,8 @@ public class FaceTrackerViewManager extends SimpleViewManager<FaceTrackerView> {
    * @param minDetectedTimes
    */
   @ReactProp(name = "minDetectedTimes", defaultInt = 5)
-  public void setMinDetectedTimes(FaceTrackerView view, Integer minDetectedTimes) {
-    if (minDetectedTimes != null) {
+  public void setMinDetectedTimes(FaceTrackerView view, int minDetectedTimes) {
       view.setMinDetectedTimes(minDetectedTimes);
-    }
   }
 
   /**
@@ -65,10 +60,9 @@ public class FaceTrackerViewManager extends SimpleViewManager<FaceTrackerView> {
    * @param confidence
    */
   @ReactProp(name="confidence",defaultFloat = 0.3f)
-  public void setConfidence(FaceTrackerView view, Float confidence) {
-    if (confidence != null) {
+  public void setConfidence(FaceTrackerView view, float confidence) {
       view.setMinConfidence(confidence);
-    }
+
   }
 
   /**
@@ -76,11 +70,10 @@ public class FaceTrackerViewManager extends SimpleViewManager<FaceTrackerView> {
    * @param view
    * @param minKeepTime
    */
-  @ReactProp(name = "minKeepTime", defaultInt = 1)
-  public void setMinKeepTime(FaceTrackerView view, Integer minKeepTime) {
-    if (minKeepTime != null) {
-      view.setMinKeepTime(minKeepTime);
-    }
+  @ReactProp(name = "minKeepTime", defaultInt = 10)
+  public void setMinKeepTime(FaceTrackerView view, int minKeepTime) {
+         view.setMinKeepTime(minKeepTime);
+
   }
 
 

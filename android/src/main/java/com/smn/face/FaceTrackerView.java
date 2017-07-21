@@ -25,6 +25,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.hardware.Camera;
 import android.media.FaceDetector;
+import android.media.Image;
 import android.support.annotation.Nullable;
 
 
@@ -384,6 +385,7 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
           faces[i].setImage(ImageUtils.getBase64FromBitmap(faceCroped));
           WritableMap event = Arguments.createMap();
           event.putMap("face", Converter.toMap(faces[i], mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT));
+         // event.putString("full", ImageUtils.getBase64FromBitmap(bitmap));
           context
             .getJSModule(RCTEventEmitter.class)
             .receiveEvent(

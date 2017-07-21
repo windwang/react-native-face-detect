@@ -156,10 +156,10 @@ public class ImageUtils {
     face.getMidPoint(mid);
 
     Rect rect = new Rect(
-      (int) (mid.x - eyesDis * 1.90f),
-      (int) (mid.y - eyesDis * 3.05f),
-      (int) (mid.x + eyesDis * 1.90f),
-      (int) (mid.y + eyesDis * 3.05f));
+      (int) (mid.x - eyesDis * 2.50f),
+      (int) (mid.y - eyesDis * 3.65f),
+      (int) (mid.x + eyesDis * 2.50f),
+      (int) (mid.y + eyesDis * 3.65f));
 
     Bitmap.Config config = Bitmap.Config.RGB_565;
     if (bitmap.getConfig() != null) config = bitmap.getConfig();

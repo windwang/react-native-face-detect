@@ -32,7 +32,12 @@ export default class FaceTrackerView extends React.Component {
     /**
      * 超时时间，超过此时间后用户再出现默认为新用户，检测次数从0开始增加,默认为10秒
      */
-    minKeepTime: PropTypes.number
+    minKeepTime: PropTypes.number,
+
+    /**
+     * 最小置信度，大于该值的才被识别为人脸,取值范围为0-1
+     */
+    confidence:PropTypes.confidence
   }
 
   constructor(props) {

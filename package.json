@@ -1,11 +1,11 @@
 {
-  "name": "react-native-google-vision",
+  "name": "react-native-face-detect",
   "version": "1.0.0",
-  "description": "A face detect  react native android and ios",
+  "description": "A react native face detect plugin for android and ios",
   "main": "index",
   "repository": {
     "type": "git",
-    "url": "https://github.com/windwang/react-native-google-vision.git"
+    "url": "https://github.com/windwang/react-native-face-detect.git"
   },
   "keywords": [
     "react-component",
@@ -17,9 +17,9 @@
   "author": "windwang <windwang@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/windwang/react-native-google-vision/issues"
+    "url": "https://github.com/windwang/react-native-face-detect/issues"
   },
-  "homepage": "https://github.com/windwang/react-native-google-vision",
+  "homepage": "https://github.com/windwang/react-native-face-detect",
   "peerDependencies": {
     "react-native": ">=0.33"
   } 

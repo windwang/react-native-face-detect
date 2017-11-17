@@ -139,9 +139,15 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
 
   public Camera open() {
     int numberOfCameras = Camera.getNumberOfCameras();
+    // 如果只有一个摄像头
+    if (numberOfCameras == 1) {
+      return Camera.open(0);
+    }
+
+    // 多个摄像头，取前置摄像头
     for (int i = 0; i < numberOfCameras; i++) {
       Camera.getCameraInfo(i, mCameraInfo);
-      if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+      if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
         this.mCameraId = i;
         return Camera.open(i);
       }

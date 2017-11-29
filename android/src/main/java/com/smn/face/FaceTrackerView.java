@@ -17,30 +17,21 @@ package com.smn.face;
 
 
 import android.content.Context;
-
-
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.hardware.Camera;
 import android.media.FaceDetector;
-import android.media.Image;
 import android.support.annotation.Nullable;
-
-
 import android.util.AttributeSet;
 import android.util.Log;
-
-
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.LifecycleEventListener;
-
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 import com.smn.face.camera.CameraSourcePreview;
-
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -55,8 +46,6 @@ import java.util.HashMap;
  */
 public final class FaceTrackerView extends CameraSourcePreview implements LifecycleEventListener, Camera.PreviewCallback {
   private static final String TAG = "FaceTracker";
-
-  private Camera mCameraSource = null;
 
   private CameraSourcePreview mPreview = this;
 
@@ -84,7 +73,7 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
   private HashMap<Integer, Integer> facesCount = new HashMap<>();
   private int minDetectedTimes = 3;
   private int minKeepTime = 10;
-  private float minConfidence=0.3f;
+  private float minConfidence = 0.3f;
 
   public FaceTrackerView(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
@@ -140,10 +129,8 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
   public Camera open() {
     int numberOfCameras = Camera.getNumberOfCameras();
 
-
     // 如果只有一个摄像头
     if (numberOfCameras == 1) {
-
       return Camera.open(0);
     }
 
@@ -196,11 +183,11 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
     releaseCamera();
   }
 
-  public  void  releaseCamera(){
-    Log.d("FACE","releaseCamera");
+  public void releaseCamera() {
+    Log.d("FACE", "releaseCamera");
     if (mCameraSource != null) {
       mCameraSource.release();
-      mCameraSource=null;
+      mCameraSource = null;
     }
   }
 

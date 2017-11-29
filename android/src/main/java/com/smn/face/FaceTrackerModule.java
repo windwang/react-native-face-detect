@@ -24,9 +24,9 @@ public class FaceTrackerModule extends ReactContextBaseJavaModule {
 
 
   @ReactMethod
-  public void  close(){
-    Log.d("FACE","ReactMethod-close");
-    if(FaceTrackerViewManager.view!=null){
+  public void close() {
+    Log.d("FACE", "ReactMethod-close");
+    if (FaceTrackerViewManager.view != null) {
       FaceTrackerViewManager.view.releaseCamera();
     }
   }

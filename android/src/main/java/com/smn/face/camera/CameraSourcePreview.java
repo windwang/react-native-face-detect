@@ -17,14 +17,12 @@ package com.smn.face.camera;
 
 import android.content.Context;
 import android.content.res.Configuration;
-
 import android.hardware.Camera;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
-
 import com.smn.face.Converter;
 
 import java.io.IOException;
@@ -37,7 +35,7 @@ public class CameraSourcePreview extends ViewGroup {
   private SurfaceView mSurfaceView;
   private boolean mStartRequested;
   private boolean mSurfaceAvailable;
-  private Camera mCameraSource;
+  protected Camera mCameraSource;
 
   /**
    * 是否隐藏预览界面

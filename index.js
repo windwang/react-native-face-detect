@@ -37,7 +37,11 @@ export default class FaceTrackerView extends React.Component {
     /**
      * 最小置信度，大于该值的才被识别为人脸,取值范围为0-1
      */
-    confidence:PropTypes.number
+    confidence:PropTypes.number,
+	/**
+	*是否关闭摄像头
+	*/
+	close:PropTypes.bool 
   }
 
   constructor(props) {

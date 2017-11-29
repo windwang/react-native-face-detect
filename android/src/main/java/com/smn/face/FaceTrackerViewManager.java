@@ -77,4 +77,18 @@ public class FaceTrackerViewManager extends SimpleViewManager<FaceTrackerView> {
   }
 
 
+  /**
+   * 关闭view
+   * @param view
+   * @param close
+   */
+  @ReactProp(name = "close", defaultBoolean = false)
+  public  void  setClose(FaceTrackerView view,boolean close){
+    if(close){
+      view.releaseCamera();
+    }
+  }
+
+
+
 }

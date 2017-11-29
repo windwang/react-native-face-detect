@@ -190,11 +190,15 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
 
   @Override
   public void onHostDestroy() {
-    if (mCameraSource != null) {
-      mCameraSource.release();
-    }
+    releaseCamera();
   }
 
+  public  void  releaseCamera(){
+    if (mCameraSource != null) {
+      mCameraSource.release();
+      mCameraSource=null;
+    }
+  }
 
   @Override
   public void onPreviewFrame(byte[] data, Camera camera) {

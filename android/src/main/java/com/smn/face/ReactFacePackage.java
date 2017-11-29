@@ -16,7 +16,8 @@ import java.util.List;
 public class ReactFacePackage implements ReactPackage {
     @Override
     public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
-        return Collections.emptyList();
+      NativeModule module=new FaceTrackerModule(reactContext);
+        return  Collections.singletonList(module);
     }
 
     @Override

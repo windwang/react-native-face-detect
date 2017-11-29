@@ -1,5 +1,6 @@
 package com.smn.face;
 
+import android.util.Log;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.uimanager.SimpleViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
@@ -10,6 +11,10 @@ import com.facebook.react.uimanager.annotations.ReactProp;
  */
 
 public class FaceTrackerViewManager extends SimpleViewManager<FaceTrackerView> {
+
+
+  public static  FaceTrackerView view=null;
+
   @Override
   public String getName() {
     return "RCTFaceTrackerView";
@@ -17,7 +22,8 @@ public class FaceTrackerViewManager extends SimpleViewManager<FaceTrackerView> {
 
   @Override
   protected FaceTrackerView createViewInstance(ThemedReactContext reactContext) {
-    return new FaceTrackerView(reactContext, null);
+    view= new FaceTrackerView(reactContext, null);
+    return view;
   }
 
 
@@ -85,6 +91,7 @@ public class FaceTrackerViewManager extends SimpleViewManager<FaceTrackerView> {
   @ReactProp(name = "close", defaultBoolean = false)
   public  void  setClose(FaceTrackerView view,boolean close){
     if(close){
+      Log.d("FACE","setClose");
       view.releaseCamera();
     }
   }

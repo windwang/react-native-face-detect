@@ -139,8 +139,11 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
 
   public Camera open() {
     int numberOfCameras = Camera.getNumberOfCameras();
+
+
     // 如果只有一个摄像头
     if (numberOfCameras == 1) {
+
       return Camera.open(0);
     }
 
@@ -194,6 +197,7 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
   }
 
   public  void  releaseCamera(){
+    Log.d("FACE","releaseCamera");
     if (mCameraSource != null) {
       mCameraSource.release();
       mCameraSource=null;

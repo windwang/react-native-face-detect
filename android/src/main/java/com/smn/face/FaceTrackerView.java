@@ -161,8 +161,7 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
         mPreview.start(mCameraSource, mCameraId);
       } catch (IOException e) {
         Log.e(TAG, "Unable to start camera source.", e);
-        mCameraSource.release();
-        mCameraSource = null;
+        releaseCamera();
       }
     }
   }

@@ -187,16 +187,6 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
     releaseCamera();
   }
 
-  public void releaseCamera() {
-    Log.d("FACE", "releaseCamera");
-    if (mCameraSource != null) {
-      mCameraSource.setPreviewCallback(null);
-      mCameraSource.stopPreview();
-      mCameraSource.release();
-      mCameraSource = null;
-    }
-  }
-
   @Override
   public void onPreviewFrame(byte[] data, Camera camera) {
     if (!isThreadWorking) {

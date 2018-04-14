@@ -55,16 +55,16 @@ public class CameraSourcePreview extends ViewGroup {
     mSurfaceView.getHolder().addCallback(new SurfaceCallback());
     // mSurfaceView.setLayoutParams(new WindowManager.LayoutParams(1, 1, WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY, WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH, PixelFormat.TRANSLUCENT));
     addView(mSurfaceView);
-    //
   }
 
   public void start(Camera cameraSource, int mCameraId) throws IOException {
-    if (cameraSource == null) {
-      stop();
+    // 释放原来的相机资源
+    if (mCameraSource != null) {
+      releaseCamera();
     }
 
     this.mCameraId = mCameraId;
-    mCameraSource = cameraSource;
+    this.mCameraSource = cameraSource;
 
     if (mCameraSource != null) {
       mStartRequested = true;
@@ -77,12 +77,18 @@ public class CameraSourcePreview extends ViewGroup {
 //  }
 
   public void stop() {
+    releaseCamera();
+  }
+
+  public void releaseCamera() {
+    Log.d("FACE", "releaseCamera");
     if (mCameraSource != null) {
       mCameraSource.setPreviewCallback(null);
       mCameraSource.stopPreview();
+      mCameraSource.release();
+      mCameraSource = null;
     }
   }
-
 
   private void startIfReady() throws IOException {
     if (mStartRequested && mSurfaceAvailable) {

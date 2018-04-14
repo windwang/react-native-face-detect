@@ -1,6 +1,6 @@
 {
   "name": "react-native-face-detect",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A react native face detect plugin for android and ios",
   "main": "index",
   "repository": {

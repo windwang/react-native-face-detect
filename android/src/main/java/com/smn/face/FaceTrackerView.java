@@ -106,10 +106,15 @@ public final class FaceTrackerView extends CameraSourcePreview implements Lifecy
    */
   private void createCameraSource() {
     mCameraSource = open();
+    // 如果没有摄像头，鸿合的班牌上没有摄像头
+    if (mCameraSource == null) {
+      return;
+    }
+    // 设置maxFace
     maxFace = mCameraSource.getParameters().getMaxNumDetectedFaces();
-    if (maxFace == 0)
+    if (maxFace == 0) {
       maxFace = 10;
-    //mCameraSource.setFaceDetectionListener(this);
+    }
     previewSize = mCameraSource.getParameters().getPreviewSize();
 
     bufflen = previewSize.width * previewSize.height;

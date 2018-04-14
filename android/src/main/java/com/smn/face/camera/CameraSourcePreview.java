@@ -78,8 +78,8 @@ public class CameraSourcePreview extends ViewGroup {
 
   public void stop() {
     if (mCameraSource != null) {
+      mCameraSource.setPreviewCallback(null);
       mCameraSource.stopPreview();
-     // mCameraSource.stopFaceDetection();
     }
   }
 

@@ -58,11 +58,6 @@ public class CameraSourcePreview extends ViewGroup {
   }
 
   public void start(Camera cameraSource, int mCameraId) throws IOException {
-    // 释放原来的相机资源
-    if (mCameraSource != null) {
-      releaseCamera();
-    }
-
     this.mCameraId = mCameraId;
     this.mCameraSource = cameraSource;
 
@@ -91,11 +86,9 @@ public class CameraSourcePreview extends ViewGroup {
   }
 
   private void startIfReady() throws IOException {
-    if (mStartRequested && mSurfaceAvailable) {
+    if (mCameraSource != null && mStartRequested && mSurfaceAvailable) {
       mCameraSource.setPreviewDisplay(mSurfaceView.getHolder());
       mCameraSource.startPreview();
-    //  mCameraSource.startFaceDetection();
-
       setCameraDisplayOrientation();
 
       mStartRequested = false;
